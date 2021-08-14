@@ -1,14 +1,16 @@
-export APP_CMD_NAME = curiosity
+# enable buildkit
+export DOCKER_BUILDKIT=1
 
 all: build test check
 
 .PHONY: build
 build: modules
-	bin/go-build.sh "cmd/$(APP_CMD_NAME)" "bin/$(APP_CMD_NAME)" $(APP_CMD_NAME) .env
+	@docker build . --target ctl \
+	--output ./bin
 
 .PHONY: modules
 modules:
-	go mod tidy
+	@docker build . --target go-mod-tidy --output .
 
 .PHONY: test
 test:
@@ -16,4 +18,8 @@ test:
 
 .PHONY: check
 check:
-	golangci-lint run
+	@docker build . --target lint
+
+.PHONY: cache-clear
+cache-clear: ## Clear the builder cache
+	@docker builder prune --force --filter type=exec.cachemount --filter=unused-for=24h
