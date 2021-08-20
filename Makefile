@@ -6,11 +6,14 @@ all: build test check
 .PHONY: build
 build: modules
 	@docker build . --target ctl \
+	--progress tty
 	--output ./bin
 
 .PHONY: modules
 modules:
-	@docker build . --target go-mod-tidy --output .
+	@docker build . --target go-mod-tidy \
+	--progress tty \
+	--output .
 
 .PHONY: test
 test:
