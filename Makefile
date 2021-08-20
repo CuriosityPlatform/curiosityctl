@@ -6,7 +6,7 @@ all: build test check
 .PHONY: build
 build: modules
 	@docker build . --target ctl \
-	--progress tty
+	--progress tty \
 	--output ./bin
 
 .PHONY: modules
