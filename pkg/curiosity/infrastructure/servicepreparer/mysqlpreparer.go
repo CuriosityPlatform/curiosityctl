@@ -2,10 +2,12 @@ package servicepreparer
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 
 	"curiosity/pkg/common/app/dockerclient"
+	"curiosity/pkg/common/infrastructure/progress"
 )
 
 type mysqlPreparer struct {
@@ -14,7 +16,9 @@ type mysqlPreparer struct {
 	dbPassword string
 }
 
-func (preparer *mysqlPreparer) Prepare(composeServiceName string) error {
+func (preparer *mysqlPreparer) Prepare(ctx context.Context, composeServiceName string) error {
+	w := progress.ContextWriter(ctx)
+
 	rawSQL, err := preparer.buildSQL()
 	if err != nil {
 		return err
@@ -24,11 +28,16 @@ func (preparer *mysqlPreparer) Prepare(composeServiceName string) error {
 
 	const execCommand = "mysql -u%s -p%s"
 
+	eventID := "Migrating database"
+	w.Event(progress.StartedEvent(eventID))
+
 	_, err = preparer.client.Exec(dockerclient.ExecParam{
 		Service: composeServiceName,
 		Command: fmt.Sprintf(execCommand, preparer.dbUser, preparer.dbPassword),
 		Reader:  sql,
 	})
+
+	w.Event(progress.DoneEvent(eventID))
 	return err
 }
 

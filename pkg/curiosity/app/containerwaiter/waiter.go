@@ -1,5 +1,7 @@
 package containerwaiter
 
+import "context"
+
 type Waiter interface {
-	WaitFor(container ...string) error
+	WaitFor(ctx context.Context, containers ...string) error
 }

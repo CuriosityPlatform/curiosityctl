@@ -1,8 +1,12 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	stdlog "log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/urfave/cli/v2"
 )
@@ -12,13 +16,17 @@ const (
 )
 
 func main() {
-	err := runApp(os.Args)
+	ctx := context.Background()
+
+	ctx = subscribeForKillSignals(ctx)
+
+	err := runApp(ctx, os.Args)
 	if err != nil {
 		stdlog.Fatal(err)
 	}
 }
 
-func runApp(args []string) error {
+func runApp(ctx context.Context, args []string) error {
 	app := &cli.App{
 		Name:    appID,
 		Version: "1.0",
@@ -34,5 +42,19 @@ func runApp(args []string) error {
 		},
 	}
 
-	return app.Run(args)
+	return app.RunContext(ctx, args)
+}
+
+func subscribeForKillSignals(ctx context.Context) context.Context {
+	ctx, cancel := context.WithCancel(ctx)
+
+	go func() {
+		ch := make(chan os.Signal, 1)
+		signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT)
+		<-ch
+		fmt.Println("Cancelled")
+		cancel()
+	}()
+
+	return ctx
 }

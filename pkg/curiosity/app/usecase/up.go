@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	"curiosity/pkg/common/app/dockerclient"
+	"curiosity/pkg/common/infrastructure/progress"
 	"curiosity/pkg/curiosity/app/containerwaiter"
 	"curiosity/pkg/curiosity/app/servicepreparer"
 )
@@ -30,38 +31,42 @@ type Up struct {
 }
 
 func (c *Up) Execute(ctx context.Context) error {
-	fmt.Println("UP")
 	err := c.dockerClient.Compose().Up(ctx, []string{"db"})
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Wait for DB")
-	err = c.waiter.WaitFor("services-db")
-	if err != nil {
-		downErr := c.dockerClient.Compose().Down(ctx, nil)
-		if downErr != nil {
-			err = errors.Wrap(err, downErr.Error())
+	err = progress.Run(ctx, func(ctx2 context.Context) error {
+		err = c.waiter.WaitFor(ctx, "services-db")
+		if err != nil {
+			downErr := c.dockerClient.Compose().Down(ctx2, nil)
+			if downErr != nil {
+				err = errors.Wrap(err, downErr.Error())
+			}
+			return err
 		}
-		return err
-	}
 
-	fmt.Println("Prepare db")
-	preparer, err := c.preparerFactory.Preparer("services-db")
-	if err != nil {
-		return err
-	}
-
-	err = preparer.Prepare("services-db")
-	if err != nil {
-		downErr := c.dockerClient.Compose().Down(ctx, nil)
-		if downErr != nil {
-			err = errors.Wrap(err, downErr.Error())
+		fmt.Println("Prepare db")
+		preparer, err2 := c.preparerFactory.Preparer("services-db")
+		if err2 != nil {
+			return err2
 		}
+
+		err2 = preparer.Prepare(ctx2, "services-db")
+		if err2 != nil {
+			downErr := c.dockerClient.Compose().Down(ctx2, nil)
+			if downErr != nil {
+				err2 = errors.Wrap(err2, downErr.Error())
+			}
+			return err2
+		}
+
+		return nil
+	})
+	if err != nil {
 		return err
 	}
 
-	fmt.Println("Prepare db")
 	err = c.dockerClient.Compose().Up(ctx, nil)
 	if err != nil {
 		return err

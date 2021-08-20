@@ -1,5 +1,7 @@
 package servicepreparer
 
+import "context"
+
 type ServicePreparer interface {
-	Prepare(composeServiceName string) error
+	Prepare(ctx context.Context, composeServiceName string) error
 }

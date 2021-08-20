@@ -3,12 +3,10 @@ package executor
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"github.com/creack/pty"
@@ -45,7 +43,6 @@ func (e *executor) Run(args []string, opts ...Opt) error {
 }
 
 func (e *executor) Output(args []string, opts ...Opt) ([]byte, error) {
-	fmt.Println("CMD: ", strings.Join(args, " "))
 	cmd := exec.Command(e.executable, args...)
 	for _, opt := range opts {
 		opt.apply(cmd)
