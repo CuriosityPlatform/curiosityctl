@@ -36,25 +36,31 @@ func (c *Up) Execute(ctx context.Context) error {
 		return err
 	}
 
-	err = progress.Run(ctx, func(ctx2 context.Context) error {
+	err = progress.Run(ctx, func(ctx context.Context) error {
 		err = c.waiter.WaitFor(ctx, "services-db")
 		if err != nil {
-			downErr := c.dockerClient.Compose().Down(ctx2, nil)
+			downErr := c.dockerClient.Compose().Down(ctx, nil)
 			if downErr != nil {
 				err = errors.Wrap(err, downErr.Error())
 			}
 			return err
 		}
 
-		fmt.Println("Prepare db")
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	err = progress.Run(ctx, func(ctx context.Context) error {
 		preparer, err2 := c.preparerFactory.Preparer("services-db")
 		if err2 != nil {
 			return err2
 		}
 
-		err2 = preparer.Prepare(ctx2, "services-db")
+		err2 = preparer.Prepare(ctx, "services-db")
 		if err2 != nil {
-			downErr := c.dockerClient.Compose().Down(ctx2, nil)
+			downErr := c.dockerClient.Compose().Down(ctx, nil)
 			if downErr != nil {
 				err2 = errors.Wrap(err2, downErr.Error())
 			}
@@ -63,9 +69,6 @@ func (c *Up) Execute(ctx context.Context) error {
 
 		return nil
 	})
-	if err != nil {
-		return err
-	}
 
 	err = c.dockerClient.Compose().Up(ctx, nil)
 	if err != nil {
