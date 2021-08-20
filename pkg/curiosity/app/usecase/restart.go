@@ -11,37 +11,47 @@ import (
 	"curiosity/pkg/curiosity/app/servicepreparer"
 )
 
-func NewUp(
+func NewRestart(
 	dockerClient dockerclient.Client,
 	preparerFactory servicepreparer.Factory,
 	waiter containerwaiter.Waiter,
-) *Up {
-	return &Up{
+) *Restart {
+	return &Restart{
 		dockerClient:    dockerClient,
 		preparerFactory: preparerFactory,
 		waiter:          waiter,
 	}
 }
 
-type Up struct {
+type Restart struct {
 	dockerClient    dockerclient.Client
 	preparerFactory servicepreparer.Factory
 	waiter          containerwaiter.Waiter
 }
 
-func (c *Up) Execute(ctx context.Context) error {
-	err := c.dockerClient.Compose().Up(ctx, []string{"db"})
+func (c *Restart) Execute(ctx context.Context) (err error) {
+	err = c.dockerClient.Compose().Down(ctx, nil)
 	if err != nil {
 		return err
 	}
 
-	err = progress.Run(ctx, func(ctx context.Context) error {
-		err = c.waiter.WaitFor(ctx, "services-db")
+	err = c.dockerClient.Compose().Up(ctx, []string{"db"})
+	if err != nil {
+		return err
+	}
+
+	defer func() {
 		if err != nil {
 			downErr := c.dockerClient.Compose().Down(ctx, nil)
 			if downErr != nil {
 				err = errors.Wrap(err, downErr.Error())
 			}
+		}
+	}()
+
+	err = progress.Run(ctx, func(ctx context.Context) error {
+		err = c.waiter.WaitFor(ctx, "services-db")
+		if err != nil {
 			return err
 		}
 
@@ -59,10 +69,6 @@ func (c *Up) Execute(ctx context.Context) error {
 
 		err2 = preparer.Prepare(ctx, "services-db")
 		if err2 != nil {
-			downErr := c.dockerClient.Compose().Down(ctx, nil)
-			if downErr != nil {
-				err2 = errors.Wrap(err2, downErr.Error())
-			}
 			return err2
 		}
 

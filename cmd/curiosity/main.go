@@ -39,6 +39,10 @@ func runApp(ctx context.Context, args []string) error {
 				Name:   "down",
 				Action: executeDown,
 			},
+			{
+				Name:   "restart",
+				Action: executeRestart,
+			},
 		},
 	}
 
