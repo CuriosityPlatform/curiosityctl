@@ -1,5 +1,6 @@
 # enable buildkit
 export DOCKER_BUILDKIT=1
+export INSTALL_TARGET=$(shell go env GOPATH)/bin
 
 all: build test check
 
@@ -26,3 +27,7 @@ check:
 .PHONY: cache-clear
 cache-clear: ## Clear the builder cache
 	@docker builder prune --force --filter type=exec.cachemount --filter=unused-for=24h
+
+.PHONY: install
+install: build
+	@cp ./bin/curiosity $(INSTALL_TARGET)/curiosity
