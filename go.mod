@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/buger/goterm v1.0.1
+	github.com/compose-spec/compose-go v0.0.0-20210809080010-b2976a566ee8
 	github.com/containerd/console v1.0.3
 	github.com/creack/pty v1.1.14
 	github.com/kelseyhightower/envconfig v1.4.0

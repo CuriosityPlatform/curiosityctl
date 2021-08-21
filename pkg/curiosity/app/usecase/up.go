@@ -7,6 +7,7 @@ import (
 
 	"curiosity/pkg/common/app/dockerclient"
 	"curiosity/pkg/common/infrastructure/progress"
+	"curiosity/pkg/curiosity/app/compose"
 	"curiosity/pkg/curiosity/app/containerwaiter"
 	"curiosity/pkg/curiosity/app/servicepreparer"
 )
@@ -15,11 +16,13 @@ func NewUp(
 	dockerClient dockerclient.Client,
 	preparerFactory servicepreparer.Factory,
 	waiter containerwaiter.Waiter,
+	project compose.Project,
 ) *Up {
 	return &Up{
 		dockerClient:    dockerClient,
 		preparerFactory: preparerFactory,
 		waiter:          waiter,
+		project:         project,
 	}
 }
 
@@ -27,14 +30,10 @@ type Up struct {
 	dockerClient    dockerclient.Client
 	preparerFactory servicepreparer.Factory
 	waiter          containerwaiter.Waiter
+	project         compose.Project
 }
 
 func (c *Up) Execute(ctx context.Context) (err error) {
-	err = c.dockerClient.Compose().Up(ctx, []string{"db"})
-	if err != nil {
-		return err
-	}
-
 	defer func() {
 		if err != nil {
 			downErr := c.dockerClient.Compose().Down(ctx, nil)
@@ -44,21 +43,31 @@ func (c *Up) Execute(ctx context.Context) (err error) {
 		}
 	}()
 
-	err = progress.Run(ctx, func(ctx context.Context) error {
-		return c.waiter.WaitFor(ctx, "services-db")
-	})
+	var awaitableServices []compose.Service
+	awaitableServices, err = c.project.AwaitableServices()
 	if err != nil {
 		return err
 	}
 
-	err = progress.Run(ctx, func(ctx context.Context) error {
-		preparer, err2 := c.preparerFactory.Preparer("services-db")
-		if err2 != nil {
-			return err2
+	if len(awaitableServices) > 0 {
+		err = c.waitServices(ctx, awaitableServices)
+		if err != nil {
+			return err
 		}
+	}
 
-		return preparer.Prepare(ctx, "services-db")
-	})
+	var bootableServices []compose.Service
+	bootableServices, err = c.project.BootableServices()
+	if err != nil {
+		return err
+	}
+
+	if len(bootableServices) > 0 {
+		err = c.bootServices(ctx, bootableServices)
+		if err != nil {
+			return err
+		}
+	}
 
 	err = c.dockerClient.Compose().Up(ctx, nil)
 	if err != nil {
@@ -66,4 +75,35 @@ func (c *Up) Execute(ctx context.Context) (err error) {
 	}
 
 	return
+}
+
+func (c *Up) waitServices(ctx context.Context, awaitableServices []compose.Service) (err error) {
+	servicesNames := make([]string, 0, len(awaitableServices))
+	containerNames := make([]string, 0, len(awaitableServices))
+	for _, service := range awaitableServices {
+		servicesNames = append(servicesNames, service.Name())
+		containerNames = append(containerNames, service.ContainerName())
+	}
+
+	err = c.dockerClient.Compose().Up(ctx, servicesNames)
+	if err != nil {
+		return err
+	}
+
+	return progress.Run(ctx, func(ctx context.Context) error {
+		return c.waiter.WaitFor(ctx, containerNames...)
+	})
+}
+
+func (c Up) bootServices(ctx context.Context, bootableServices []compose.Service) error {
+	containerNames := make([]string, 0, len(bootableServices))
+	for _, service := range bootableServices {
+		containerNames = append(containerNames, service.ContainerName())
+	}
+
+	return progress.Run(ctx, func(ctx context.Context) error {
+		g := servicepreparer.NewPreparersGroup(c.preparerFactory)
+
+		return g.Start(ctx, containerNames)
+	})
 }

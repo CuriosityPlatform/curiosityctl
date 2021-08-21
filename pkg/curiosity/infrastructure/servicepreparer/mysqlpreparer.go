@@ -37,8 +37,13 @@ func (preparer *mysqlPreparer) Prepare(ctx context.Context, composeServiceName s
 		Reader:  sql,
 	})
 
+	if err != nil {
+		w.Event(progress.ErrorEvent(eventID))
+		return err
+	}
+
 	w.Event(progress.DoneEvent(eventID))
-	return err
+	return nil
 }
 
 func (preparer *mysqlPreparer) buildSQL() (string, error) {
