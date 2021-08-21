@@ -29,23 +29,23 @@ type Up struct {
 	waiter          containerwaiter.Waiter
 }
 
-func (c *Up) Execute(ctx context.Context) error {
-	err := c.dockerClient.Compose().Up(ctx, []string{"db"})
+func (c *Up) Execute(ctx context.Context) (err error) {
+	err = c.dockerClient.Compose().Up(ctx, []string{"db"})
 	if err != nil {
 		return err
 	}
 
-	err = progress.Run(ctx, func(ctx context.Context) error {
-		err = c.waiter.WaitFor(ctx, "services-db")
+	defer func() {
 		if err != nil {
 			downErr := c.dockerClient.Compose().Down(ctx, nil)
 			if downErr != nil {
 				err = errors.Wrap(err, downErr.Error())
 			}
-			return err
 		}
+	}()
 
-		return nil
+	err = progress.Run(ctx, func(ctx context.Context) error {
+		return c.waiter.WaitFor(ctx, "services-db")
 	})
 	if err != nil {
 		return err
@@ -57,16 +57,7 @@ func (c *Up) Execute(ctx context.Context) error {
 			return err2
 		}
 
-		err2 = preparer.Prepare(ctx, "services-db")
-		if err2 != nil {
-			downErr := c.dockerClient.Compose().Down(ctx, nil)
-			if downErr != nil {
-				err2 = errors.Wrap(err2, downErr.Error())
-			}
-			return err2
-		}
-
-		return nil
+		return preparer.Prepare(ctx, "services-db")
 	})
 
 	err = c.dockerClient.Compose().Up(ctx, nil)
@@ -74,5 +65,5 @@ func (c *Up) Execute(ctx context.Context) error {
 		return err
 	}
 
-	return nil
+	return
 }
