@@ -32,6 +32,14 @@ Commands shortlist
 
 ## Installing and developing
 
+### Install
+
+It will build project, run tests and linter, than install binary to `$GOPATH/bin`
+
+```shell
+make install
+```
+
 ### Build project
 
 It will run build, linter, unit-tests

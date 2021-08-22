@@ -29,5 +29,5 @@ cache-clear: ## Clear the builder cache
 	@docker builder prune --force --filter type=exec.cachemount --filter=unused-for=24h
 
 .PHONY: install
-install: build
+install: all
 	@cp ./bin/curiosity $(INSTALL_TARGET)/curiosity
