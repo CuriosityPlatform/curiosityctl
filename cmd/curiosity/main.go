@@ -57,8 +57,16 @@ func runApp(ctx context.Context, args []string) error {
 				HideHelpCommand: true,
 				Subcommands: []*cli.Command{
 					{
-						Name:     "platform",
-						Category: "install",
+						Name:      "platform",
+						Category:  "install",
+						Action:    executeInstallPlatform,
+						UsageText: "platform -o [platform directory]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "output",
+								Aliases: []string{"o"},
+							},
+						},
 					},
 				},
 			},
