@@ -28,7 +28,7 @@ func (git *gitVcs) WithRepoPath(path string) vcs.RepoManager {
 }
 
 func (git *gitVcs) WithClonedRepo(remoteURL string, to *string) (vcs.RepoManager, error) {
-	projectName, err := projectNameFromUrl(remoteURL)
+	projectName, err := projectNameFromURL(remoteURL)
 	if err != nil {
 		return nil, err
 	}

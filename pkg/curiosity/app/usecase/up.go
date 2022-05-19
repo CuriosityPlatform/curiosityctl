@@ -70,11 +70,7 @@ func (c *Up) Execute(ctx context.Context) (err error) {
 	}
 
 	err = c.dockerClient.Compose().Up(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	return
+	return err
 }
 
 func (c *Up) waitServices(ctx context.Context, awaitableServices []compose.Service) (err error) {

@@ -35,8 +35,9 @@ func (w *waiter) WaitFor(ctx context.Context, containers ...string) error {
 	deadlineContext, cancel := context.WithDeadline(ctx, time.Now().Add(time.Second*waitSeconds))
 
 	for _, container := range containers {
+		c := container
 		eg.Go(func() error {
-			eventID := fmt.Sprintf("Container %s", container)
+			eventID := fmt.Sprintf("Container %s", c)
 			writer.Event(progress.WaitingEvent(eventID))
 
 			ticker := time.NewTicker(1 * time.Second)
@@ -56,7 +57,7 @@ func (w *waiter) WaitFor(ctx context.Context, containers ...string) error {
 					writer.Event(progress.ErrorMessageEvent(eventID, fmt.Sprintf("State: %s", inspectResultStr)))
 					return errors.New(fmt.Sprintf("current status: %s, check container logs manually", inspectResultStr))
 				case <-ticker.C:
-					inspectResult, err := w.client.Inspect("{{.State.Health.Status}}", container)
+					inspectResult, err := w.client.Inspect("{{.State.Health.Status}}", c)
 					if err != nil {
 						writer.Event(progress.ErrorEvent(eventID))
 						return err

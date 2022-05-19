@@ -6,7 +6,9 @@ import (
 )
 
 func parseConfig() (*config, error) {
-	c := &config{}
+	c := &config{
+		KubernetesManifestsBasePath: "kubernetes/app",
+	}
 
 	if err := envconfig.Process(appID, c); err != nil {
 		return nil, errors.Wrap(err, "failed to parse env")
@@ -16,4 +18,6 @@ func parseConfig() (*config, error) {
 
 type config struct {
 	PlatformRoot string `envconfig:"platform_root" required:"1"`
+
+	KubernetesManifestsBasePath string
 }

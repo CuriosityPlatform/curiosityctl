@@ -8,11 +8,12 @@ import (
 )
 
 const (
+	//nolint
 	platformPathEnvName = "CURIOSITYCTL_PLATFORM_ROOT"
 )
 
-func NewInstallPlatform(vcs vcs.VCS) *InstallPlatform {
-	return &InstallPlatform{vcs: vcs}
+func NewInstallPlatform(v vcs.VCS) *InstallPlatform {
+	return &InstallPlatform{vcs: v}
 }
 
 type InstallPlatform struct {

@@ -51,6 +51,18 @@ func runApp(ctx context.Context, args []string) error {
 				Description: "RESTART curiosity environment",
 			},
 			{
+				Name:        "deploy",
+				Action:      executeDeploy,
+				Usage:       "DEPLOY platform",
+				Description: "DEPLOY into k8s cluster",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "app",
+						Usage: "Deploys specific app",
+					},
+				},
+			},
+			{
 				Name:            "install",
 				Usage:           "Install curiosity environment modules",
 				Description:     "Install curiosity environment modules, like Platform and one or all services",
@@ -88,4 +100,11 @@ func subscribeForKillSignals(ctx context.Context) context.Context {
 	}()
 
 	return ctx
+}
+
+func emptyStringToPtr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }

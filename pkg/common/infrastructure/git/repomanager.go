@@ -45,6 +45,7 @@ func (repo *repoManager) RemoteBranches() ([]string, error) {
 
 	reg := regexp.MustCompile(`(^.+?)\s`)
 
+	//nolint:prealloc
 	var branches []string
 
 	for i, s := range strings.Split(string(output), "\n") {

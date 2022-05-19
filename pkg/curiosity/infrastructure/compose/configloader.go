@@ -1,7 +1,7 @@
 package compose
 
 import (
-	"io/ioutil"
+	"os"
 	"path"
 
 	composeloader "github.com/compose-spec/compose-go/loader"
@@ -35,7 +35,7 @@ func (l *loader) Load(params LoadParams) (*types.Project, error) {
 		mainConfigPath = params.MainConfigFilePath
 	}
 
-	b, err := ioutil.ReadFile(path.Join(params.WorkDir, mainConfigPath))
+	b, err := os.ReadFile(path.Join(params.WorkDir, mainConfigPath))
 	if err != nil {
 		return nil, err
 	}

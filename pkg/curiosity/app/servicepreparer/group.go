@@ -28,8 +28,9 @@ func (g *PreparersGroup) Start(ctx context.Context, services []string) error {
 	}
 
 	for service, preparer := range preparers {
+		s, p := service, preparer
 		eg.Go(func() error {
-			return preparer.Prepare(ctx, service)
+			return p.Prepare(ctx, s)
 		})
 	}
 
