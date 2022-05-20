@@ -47,6 +47,10 @@ func (client *client) Inspect(format, containerName string) ([]byte, error) {
 	})
 }
 
+func (client *client) Push(image string) error {
+	return client.executor.Run([]string{"push", image})
+}
+
 func (client *client) Compose() dockerclient.Compose {
 	return client.composeClient
 }

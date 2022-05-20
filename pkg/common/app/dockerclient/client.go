@@ -14,6 +14,7 @@ type ExecParam struct {
 type Client interface {
 	Exec(param ExecParam) ([]byte, error)
 	Inspect(format string, containerName string) ([]byte, error)
+	Push(image string) error
 
 	Compose() Compose
 }

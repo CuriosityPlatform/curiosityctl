@@ -35,6 +35,7 @@ func executePackage(ctx *cli.Context) error {
 		return err
 	}
 
+	pushImage := ctx.Bool("push")
 	projectPath := ctx.String("project-path")
 	if projectPath == "" {
 		var err2 error
@@ -53,11 +54,14 @@ func executePackage(ctx *cli.Context) error {
 
 	fs := os.DirFS(projectPath)
 
-	packagerAPI := infrastructure.BuildAPI()
+	packagerAPI, err := infrastructure.BuildAPI()
+	if err != nil {
+		return err
+	}
 	p, err := packagerAPI.Package(ctx.Context, api.PackageParams{
 		PackageName: nil,
 		Packager:    api.Makefile,
-		Push:        ctx.Bool("push"),
+		Push:        pushImage,
 		Registry:    config.DockerRegistry,
 		ProjectFS:   fs,
 	})
@@ -65,7 +69,12 @@ func executePackage(ctx *cli.Context) error {
 		return err
 	}
 
-	fmt.Println("Packaged with image", p.Image)
+	var msgPart string
+	if pushImage {
+		msgPart = "and pushed"
+	}
+
+	fmt.Printf("Packaged %s with image %s\n", msgPart, p.Image)
 
 	return nil
 }
