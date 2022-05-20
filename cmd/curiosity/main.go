@@ -11,8 +11,9 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-const (
-	appID = "curiosityctl"
+var (
+	appID   = "curiosityctl"
+	version = "UNKNOWN"
 )
 
 func main() {
@@ -29,7 +30,7 @@ func main() {
 func runApp(ctx context.Context, args []string) error {
 	app := &cli.App{
 		Name:    appID,
-		Version: "1.0",
+		Version: version,
 		Usage:   "Tool to manage, init curiosity environment",
 		Commands: []*cli.Command{
 			{
@@ -82,6 +83,7 @@ func runApp(ctx context.Context, args []string) error {
 					},
 				},
 			},
+			Package(),
 		},
 	}
 

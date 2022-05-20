@@ -1,7 +1,9 @@
 package executor
 
 import (
+	"fmt"
 	"io"
+	"os"
 	"os/exec"
 )
 
@@ -30,5 +32,15 @@ func WithStdin(reader io.Reader) Opt {
 func WithStdout(writer io.Writer) Opt {
 	return executorOptFunc(func(cmd *exec.Cmd) {
 		cmd.Stdout = writer
+	})
+}
+
+func WithEnv(envMap map[string]string) Opt {
+	return executorOptFunc(func(cmd *exec.Cmd) {
+		env := make([]string, 0, len(envMap))
+		for k, v := range envMap {
+			env = append(env, fmt.Sprintf("%s=%s", k, v))
+		}
+		cmd.Env = append(os.Environ(), env...)
 	})
 }
