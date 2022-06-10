@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/urfave/cli/v2"
 
 	"curiosity/pkg/common/infrastructure/git"
@@ -8,7 +10,8 @@ import (
 )
 
 const (
-	platformRepoURL = "git@github.com:CuriosityPlatform/platform.git"
+	platformRepoURL     = "git@github.com:CuriosityPlatform/platform.git"
+	platformPathEnvName = "CURIOSITYCTL_PLATFORM_ROOT"
 )
 
 func executeInstallPlatform(ctx *cli.Context) error {
@@ -19,8 +22,16 @@ func executeInstallPlatform(ctx *cli.Context) error {
 
 	useCase := usecase.NewInstallPlatform(vsc)
 
-	return useCase.Execute(ctx.Context, usecase.InstallPlatformExecuteParams{
+	platformPath, err := useCase.Execute(ctx.Context, usecase.InstallPlatformExecuteParams{
 		OutPath:       emptyStringToPtr(ctx.String("output")),
 		RepoRemoteURL: platformRepoURL,
 	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Please setup %s to %s as global environment\n", platformPathEnvName, platformPath)
+	fmt.Println("Platform installed")
+
+	return nil
 }

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 
 	"curiosity/pkg/common/app/vcs"
 	"curiosity/pkg/common/infrastructure/progress"
@@ -9,7 +10,7 @@ import (
 
 const (
 	//nolint
-	platformPathEnvName = "CURIOSITYCTL_PLATFORM_ROOT"
+	platformDefaultPath = "platform"
 )
 
 func NewInstallPlatform(v vcs.VCS) *InstallPlatform {
@@ -25,13 +26,18 @@ type InstallPlatformExecuteParams struct {
 	RepoRemoteURL string
 }
 
-func (c *InstallPlatform) Execute(ctx context.Context, params InstallPlatformExecuteParams) error {
-	return progress.Run(ctx, func(ctx context.Context) error {
+func (c *InstallPlatform) Execute(ctx context.Context, params InstallPlatformExecuteParams) (platformPath string, err error) {
+	return platformPath, progress.Run(ctx, func(ctx context.Context) error {
+		platformPath = platformDefaultPath
+		if params.OutPath != nil {
+			platformPath = *params.OutPath
+		}
+
 		w := progress.ContextWriter(ctx)
-		eventID := "Clone platform"
+		eventID := fmt.Sprintf("Clone platform to %s", platformPath)
 		w.Event(progress.StartedEvent(eventID))
 
-		_, err := c.vcs.WithClonedRepo(params.RepoRemoteURL, params.OutPath)
+		_, err = c.vcs.WithClonedRepo(params.RepoRemoteURL, params.OutPath)
 		if err != nil {
 			progress.ErrorEvent(eventID)
 			return err
